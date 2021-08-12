@@ -40,19 +40,32 @@ def save():
         "username": username,
         "password": password,
     }}
+    # Check for empty entries
     if not all((website, username, password)):
         messagebox.showwarning(title="Oops", message="Please don't leave any fields empty")
     else:
         try:
             with open("data.json", mode="r") as data_file:
                 data = json.load(data_file)
-                data.update(new_data)
         except FileNotFoundError:
             with open("data.json", mode="w") as data_file:
                 json.dump(new_data, data_file, indent=4)
         else:
-            with open("data.json", mode="w") as data_file:
-                json.dump(data, data_file, indent=4)
+            # Check if website exist in data file
+            if website in data:
+                # Ask the user if data should be updated
+                if messagebox.askyesno(title=f"Credential for {website}",
+                                           message=f"Credentials for {website}"
+                                                   f" exist in data file.\n Update?"):
+                    data.update(new_data)
+                    # Write new data
+                    with open("data.json", mode="w") as data_file:
+                        json.dump(data, data_file, indent=4)
+            else:
+                data.update(new_data)
+                # Write new data
+                with open("data.json", mode="w") as data_file:
+                    json.dump(data, data_file, indent=4)
         finally:
             clear_entries()
 
@@ -69,9 +82,13 @@ def find_password():
             messagebox.showwarning(title="Warning", message="Data File not Found")
         else:
             if website in data:
-                messagebox.showinfo(title=f"credentials for {website}",
-                                    message=f"username: {data[website]['username']}\n"
-                                            f"password: {data[website]['password']}")
+                pass_entry.delete(0, END)
+                username_entry.delete(0, END)
+                username_entry.insert(0, f"{data[website]['username']}")
+                pass_entry.insert(0, f"{data[website]['password']}")
+                # messagebox.showinfo(title=f"credentials for {website}",
+                #                     message=f"username: {data[website]['username']}\n"
+                #                             f"password: {data[website]['password']}")
             else:
                 messagebox.showwarning(title="Warning", message=f"Credentials for {website} not found")
 
@@ -79,6 +96,7 @@ def find_password():
 def clear_entries():
     website_entry.delete(0, END)
     pass_entry.delete(0, END)
+    username_entry.delete(0, END)
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -110,7 +128,7 @@ website_entry.focus()
 
 username_entry = Entry()
 username_entry.grid(column=1, row=2, columnspan=2, sticky='we')
-username_entry.insert(0, "name@example.com")
+# username_entry.insert(0, "name@example.com")
 
 pass_entry = Entry()
 pass_entry.grid(column=1, row=3, sticky='we')
